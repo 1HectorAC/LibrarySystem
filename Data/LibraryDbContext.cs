@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Data;
 
-public class LibrarySystem: DbContext
+public class LibraryDbContext: DbContext
 {
-    public LibrarySystem(DbContextOptions<LibrarySystem> options) : base(options) { }
+    public LibraryDbContext(DbContextOptions<LibraryDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -14,9 +14,9 @@ public class LibrarySystem: DbContext
         
 
     }
-    DbSet<Author> Authors { get; set; }
-    DbSet<Book> Books { get; set; }
-    DbSet<BookCopy> BookCopies { get; set; }
-    DbSet<Checkout> Checkouts { get; set; }
-    DbSet<User> Users { get; set; }
+    public DbSet<Author> Authors { get; set; }
+    public DbSet<Book> Books { get; set; }
+    public DbSet<BookCopy> BookCopies { get; set; }
+    public DbSet<Checkout> Checkouts { get; set; }
+    public DbSet<User> Users { get; set; }
 }
