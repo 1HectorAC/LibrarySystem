@@ -27,7 +27,7 @@ public class AuthorController: ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Author>> Author(int id)
     {
-        var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id == id);
+        var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id.Equals(id));
         if (author == null) return NotFound();
         return Ok(author);
     }
@@ -35,7 +35,7 @@ public class AuthorController: ControllerBase
     [HttpPost]
     public async Task<ActionResult<Author>> Author([FromBody] Author author)
     {
-        await _context.AddAsync(author);
+        _context.Authors.Add(author);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(Author), new {id=author.Id }, author);
     }
