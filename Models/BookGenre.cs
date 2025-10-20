@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace LibrarySystem.Models;
 
-public class BookCopy
+public class BookGenre
 {
     public int Id { get; set; }
 
@@ -15,8 +15,8 @@ public class BookCopy
     public Book? Book { get; set; }
 
     [Required]
-    public bool Available { get; set; }
+    public int GenreId { get; set; }
 
     [JsonIgnore]
-    public ICollection<Checkout>? Checkouts { get; set; }
+    public Genre? Genre { get; set; }
 }

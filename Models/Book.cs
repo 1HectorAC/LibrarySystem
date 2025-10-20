@@ -16,8 +16,10 @@ public class Book
     public string? Description { get; set; }
 
     [Required]
-    [StringLength(100)]
-    public required string Publisher { get; set; }
+    public int PublisherId { get; set; }
+
+    [JsonIgnore]
+    public Publisher? Publisher { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -28,5 +30,8 @@ public class Book
 
     [JsonIgnore]
     public Author? Author { get; set; }
+
+    [JsonIgnore]
+    public ICollection<BookGenre>? BookGenres { get; set; }
 
 }
