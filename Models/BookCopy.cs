@@ -18,5 +18,5 @@ public class BookCopy
     public bool Available { get; set; }
 
     [JsonIgnore]
-    public ICollection<Checkout>? Checkouts { get; set; } = new List<Checkout>();
+    public ICollection<Checkout> Checkouts { get; set; } = new List<Checkout>();
 }

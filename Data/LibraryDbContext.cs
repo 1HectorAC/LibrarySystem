@@ -19,4 +19,7 @@ public class LibraryDbContext: DbContext
     public DbSet<BookCopy> BookCopies { get; set; }
     public DbSet<Checkout> Checkouts { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Genre> Genres { get; set; }
+    public DbSet<BookGenre> BookGenres { get; set; }
+    public DbSet<Publisher> Publishers { get; set; }
 }
