@@ -22,6 +22,6 @@ public class User
     public required string Email { get; set; }
 
     [JsonIgnore]
-    public ICollection<Checkout>? Checkouts { get; set; }
+    public ICollection<Checkout> Checkouts { get; set; } = new List<Checkout>();
 
 }

@@ -19,5 +19,5 @@ public class Author
     public string? About { get; set; }
 
     [JsonIgnore]
-    public ICollection<Book>? Books { get; set; }
+    public ICollection<Book> Books { get; set; } = new List<Book>();
 }

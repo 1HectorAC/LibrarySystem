@@ -18,5 +18,5 @@ public class Publisher
     // Fields to consider  adding: address, phone
 
     [JsonIgnore]
-    public ICollection<Book>? Books { get; set; }
+    public ICollection<Book> Books { get; set; } = new List<Book>();
 }

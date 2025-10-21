@@ -16,5 +16,5 @@ public class Genre
     public string? Description { get; set; }
 
     [JsonIgnore]
-    public ICollection<BookGenre>? BookGenres { get; set; }
+    public ICollection<BookGenre> BookGenres { get; set; } = new List<BookGenre>();
 }
