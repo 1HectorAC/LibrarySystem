@@ -27,7 +27,7 @@ public class BookCopyController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BookCopy>> BookCopy(int id)
     {
-        var bookCopy = _context.BookCopies.FirstOrDefaultAsync(i => i.Id.Equals(id));
+        var bookCopy = await _context.BookCopies.FirstOrDefaultAsync(i => i.Id.Equals(id));
         if (bookCopy is null) return NotFound();
         return Ok(bookCopy);
     }
