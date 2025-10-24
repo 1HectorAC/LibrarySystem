@@ -51,22 +51,42 @@ public class BookController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Book>> Book(int id)
+    public async Task<ActionResult<BookDto>> Book(int id)
     {
-        var book = await _context.Books.FirstOrDefaultAsync(i => i.Id.Equals(id));
+        var book = await _context.Books.Include(i => i.BookGenres).ThenInclude(i => i.Genre).Include(i => i.Author).Include(i => i.Publisher).FirstOrDefaultAsync(i => i.Id.Equals(id));
         if (book == null) return NotFound();
 
-        //Format results, same as for all books above
-        return Ok(book);
+        var result = new BookDto
+        {
+            Id = book.Id,
+            Title = book.Title,
+            Description = book.Description,
+            Isbn = book.Isbn,
+            AuthorName = book.Author == null ? null : book.Author.FirstName + " " + book.Author.LastName,
+            PublisherName = book.Publisher == null ? null : book.Publisher.Name,
+            Genres = book.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
+        };
+
+        return Ok(result);
     }
 
     // Add Update endpoint
 
+    // Add Delete endpoint
+
     [HttpPost]
-    public async Task<ActionResult<Book>> Book([FromBody] Book book)
+    public async Task<ActionResult<BookDto>> Book([FromBody] Book book)
     {
-        // Maybe add book DTO
-        // Error checks?
+        //Consider adding CreateBookDto, which has list of genreIds for adding genres at same time
+
+        // Check if Author exits:
+        bool authorCheck = _context.Authors.Any(a => a.Id.Equals(book.AuthorId));
+        if (!authorCheck)
+            return BadRequest(new { Message = "AuthorId does not match an Author in database." });
+        //Check if Publisher exits:
+        bool publisherCheck = _context.Publishers.Any(p => p.Id.Equals(book.PublisherId));
+        if (!publisherCheck)
+            return BadRequest(new {Message = "PublisherId does not match a Publisher in database." });
 
         _context.Books.Add(book);
         await _context.SaveChangesAsync();
