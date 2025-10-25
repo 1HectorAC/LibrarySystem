@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LibrarySystem.DTO;
 
-public class BookDto
+public class CreateBookDto
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(100)]
     public required string Title { get; set; }
@@ -14,17 +12,14 @@ public class BookDto
     [StringLength(200)]
     public string? Description { get; set; }
 
-    [Required]
     [StringLength(100)]
     public required string Isbn { get; set; }
 
     [Required]
-    [StringLength(100)]
-    public required string AuthorName { get; set; }
+    public required int AuthorId { get; set; }
 
-    public List<string> Genres { get; set; } = new();
+    public List<int> GenreIds { get; set; } = new();
 
     [Required]
-    [StringLength(100)]
-    public required string PublisherName { get; set; }
+    public int PublisherId { get; set; }
 }

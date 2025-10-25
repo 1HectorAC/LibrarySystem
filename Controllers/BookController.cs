@@ -41,8 +41,8 @@ public class BookController : ControllerBase
             Title = b.Title,
             Description = b.Description,
             Isbn = b.Isbn,
-            AuthorName = b.Author == null ? null : b.Author.FirstName + " " + b.Author.LastName,
-            PublisherName = b.Publisher == null ? null : b.Publisher.Name,
+            AuthorName = b.Author == null ? "" : b.Author.FirstName + " " + b.Author.LastName,
+            PublisherName = b.Publisher == null ? "" : b.Publisher.Name,
             Genres = b.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
 
         }).ToListAsync();
@@ -62,8 +62,8 @@ public class BookController : ControllerBase
             Title = book.Title,
             Description = book.Description,
             Isbn = book.Isbn,
-            AuthorName = book.Author == null ? null : book.Author.FirstName + " " + book.Author.LastName,
-            PublisherName = book.Publisher == null ? null : book.Publisher.Name,
+            AuthorName = book.Author == null ? "" : book.Author.FirstName + " " + book.Author.LastName,
+            PublisherName = book.Publisher == null ? "" : book.Publisher.Name,
             Genres = book.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
         };
 
@@ -75,21 +75,39 @@ public class BookController : ControllerBase
     // Add Delete endpoint
 
     [HttpPost]
-    public async Task<ActionResult<BookDto>> Book([FromBody] Book book)
+    public async Task<ActionResult<BookDto>> Book([FromBody] CreateBookDto book)
     {
-        //Consider adding CreateBookDto, which has list of genreIds for adding genres at same time
-
-        // Check if Author exits:
+        // Check if Author exits
         bool authorCheck = _context.Authors.Any(a => a.Id.Equals(book.AuthorId));
         if (!authorCheck)
             return BadRequest(new { Message = "AuthorId does not match an Author in database." });
-        //Check if Publisher exits:
+        //Check if Publisher exits
         bool publisherCheck = _context.Publishers.Any(p => p.Id.Equals(book.PublisherId));
         if (!publisherCheck)
-            return BadRequest(new {Message = "PublisherId does not match a Publisher in database." });
+            return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
+        //Check if GenreIds exist
+        if(book.GenreIds.Count > 0)
+        {
+            var genres = _context.Genres.ToList();
+            var genreCheck = book.GenreIds.All(i => genres.Any(j => j.Id == i));
+            if (!genreCheck)
+                return BadRequest(new {Message= "one or more genreId(s) doesn't exist in database" });
+        }
 
-        _context.Books.Add(book);
+        Book result = new Book
+        {
+            Title = book.Title,
+            Description = book.Description,
+            AuthorId = book.AuthorId,
+            PublisherId = book.PublisherId,
+            Isbn = book.Isbn
+        };
+
+        _context.Books.Add(result);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Book), new {id = book.Id }, book);
+
+        // Need to add BookGenres
+        
+        return CreatedAtAction(nameof(result), new {id = result.Id }, result);
     }
 }
