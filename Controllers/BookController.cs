@@ -85,11 +85,13 @@ public class BookController : ControllerBase
         bool publisherCheck = _context.Publishers.Any(p => p.Id.Equals(book.PublisherId));
         if (!publisherCheck)
             return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
+        
         //Check if GenreIds exist
-        if(book.GenreIds.Count > 0)
+        var genreIds = book.GenreIds;
+        if(genreIds.Count > 0)
         {
             var genres = _context.Genres.ToList();
-            var genreCheck = book.GenreIds.All(i => genres.Any(j => j.Id == i));
+            var genreCheck = genreIds.All(i => genres.Any(j => j.Id == i));
             if (!genreCheck)
                 return BadRequest(new {Message= "one or more genreId(s) doesn't exist in database" });
         }
@@ -100,14 +102,15 @@ public class BookController : ControllerBase
             Description = book.Description,
             AuthorId = book.AuthorId,
             PublisherId = book.PublisherId,
-            Isbn = book.Isbn
+            Isbn = book.Isbn,
+            BookGenres = genreIds.Select(id => new BookGenre { GenreId = id }).ToList()
         };
 
         _context.Books.Add(result);
         await _context.SaveChangesAsync();
 
-        // Need to add BookGenres
-        
-        return CreatedAtAction(nameof(result), new {id = result.Id }, result);
+        // Consider adding format to result, Maybe use DTO.
+
+        return CreatedAtAction(nameof(Book), new { id = result.Id }, result);
     }
 }
