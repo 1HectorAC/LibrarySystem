@@ -22,10 +22,10 @@ public class BookController : ControllerBase
     {
         //Consider adding pagination
         var books = _context.Books.Include(i => i.BookGenres).ThenInclude(i => i.Genre).Include(i => i.Author).Include(i => i.Publisher).AsQueryable();
-        
+
         if (genreName is not null)
             books = books.Where(i => i.BookGenres.Any(i => i.Genre != null && i.Genre.Name == genreName));
-        
+
         if (authorFirstName is not null)
             books = books.Where(i => i.Author != null && i.Author.FirstName == authorFirstName);
 
@@ -46,7 +46,7 @@ public class BookController : ControllerBase
             Genres = b.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
 
         }).ToListAsync();
-        
+
         return Ok(result);
     }
 
@@ -72,7 +72,30 @@ public class BookController : ControllerBase
 
     // Add Update endpoint
 
-    // Add Delete endpoint
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteBook(int id)
+    {
+
+        // Get book by Id and include Checkouts with no DateReturned
+        var book = await _context.Books
+            .Include(b => b.BookCopies)
+            .ThenInclude(bc => bc.Checkouts.Where(c => c.DateReturned == null))
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (book == null)
+            return NotFound(new { Message = $"Book with ID {id} not found." });
+
+        // Check for active checkouts
+        if (book.BookCopies.Any(bc => bc.Checkouts.Count != 0))
+        {
+            return BadRequest(new { Message = "Cannot delete book with active checkouts." });
+        }
+
+        _context.Books.Remove(book);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 
     [HttpPost]
     public async Task<ActionResult<BookDto>> Book([FromBody] CreateBookDto book)
@@ -85,15 +108,15 @@ public class BookController : ControllerBase
         bool publisherCheck = _context.Publishers.Any(p => p.Id.Equals(book.PublisherId));
         if (!publisherCheck)
             return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
-        
+
         //Check if GenreIds exist
         var genreIds = book.GenreIds;
-        if(genreIds.Count > 0)
+        if (genreIds.Count > 0)
         {
             var genres = _context.Genres.ToList();
             var genreCheck = genreIds.All(i => genres.Any(j => j.Id == i));
             if (!genreCheck)
-                return BadRequest(new {Message= "one or more genreId(s) doesn't exist in database" });
+                return BadRequest(new { Message = "one or more genreId(s) doesn't exist in database" });
         }
 
         Book result = new Book

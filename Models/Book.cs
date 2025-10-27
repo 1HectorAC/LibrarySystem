@@ -32,6 +32,9 @@ public class Book
     public Author? Author { get; set; }
 
     [JsonIgnore]
+    public ICollection<BookCopy> BookCopies { get; set; } = new List<BookCopy>();
+
+    [JsonIgnore]
     public ICollection<BookGenre> BookGenres { get; set; } = new List<BookGenre>();
 
 }

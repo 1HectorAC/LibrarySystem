@@ -254,7 +254,7 @@ namespace LibrarySystem.Migrations
             modelBuilder.Entity("LibrarySystem.Models.BookCopy", b =>
                 {
                     b.HasOne("LibrarySystem.Models.Book", "Book")
-                        .WithMany()
+                        .WithMany("BookCopies")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -307,6 +307,8 @@ namespace LibrarySystem.Migrations
 
             modelBuilder.Entity("LibrarySystem.Models.Book", b =>
                 {
+                    b.Navigation("BookCopies");
+
                     b.Navigation("BookGenres");
                 });
 
