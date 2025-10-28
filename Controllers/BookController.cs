@@ -70,7 +70,66 @@ public class BookController : ControllerBase
         return Ok(result);
     }
 
-    // Add Update endpoint
+[HttpPut("{id}")]
+public async Task<ActionResult<BookDto>> UpdateBook(int id, [FromBody] CreateBookDto bookDto)
+{
+    var book = await _context.Books
+        .Include(b => b.BookGenres)
+        .Include(b => b.Author)
+        .Include(b => b.Publisher)
+        .FirstOrDefaultAsync(b => b.Id == id);
+
+    if (book == null)
+        return NotFound(new { Message = $"Book with ID {id} not found." });
+
+    // Validate Author exists
+    if (!await _context.Authors.AnyAsync(a => a.Id == bookDto.AuthorId))
+        return BadRequest(new { Message = "AuthorId does not match an Author in database." });
+
+    // Validate Publisher exists
+    if (!await _context.Publishers.AnyAsync(p => p.Id == bookDto.PublisherId))
+        return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
+
+    // Validate GenreIds exist
+    if (bookDto.GenreIds.Count > 0)
+    {
+        var genres = await _context.Genres.ToListAsync();
+        var genreCheck = bookDto.GenreIds.All(id => genres.Any(g => g.Id == id));
+        if (!genreCheck)
+            return BadRequest(new { Message = "One or more genreId(s) doesn't exist in database" });
+    }
+
+    // Update basic properties
+    book.Title = bookDto.Title;
+    book.Description = bookDto.Description;
+    book.AuthorId = bookDto.AuthorId;
+    book.PublisherId = bookDto.PublisherId;
+    book.Isbn = bookDto.Isbn;
+
+    // Update genres - remove existing and add new
+    _context.BookGenres.RemoveRange(book.BookGenres);
+    book.BookGenres = bookDto.GenreIds.Select(genreId => new BookGenre 
+    { 
+        BookId = id, 
+        GenreId = genreId 
+    }).ToList();
+
+    await _context.SaveChangesAsync();
+
+    // Return updated book in same format as GET
+    var result = new BookDto
+    {
+        Id = book.Id,
+        Title = book.Title,
+        Description = book.Description,
+        Isbn = book.Isbn,
+        AuthorName = book.Author == null ? "" : book.Author.FirstName + " " + book.Author.LastName,
+        PublisherName = book.Publisher == null ? "" : book.Publisher.Name,
+        Genres = book.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
+    };
+
+    return Ok(result);
+}
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBook(int id)
