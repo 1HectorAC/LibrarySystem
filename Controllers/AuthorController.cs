@@ -32,6 +32,35 @@ public class AuthorController: ControllerBase
         return Ok(author);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAuthor(int id)
+    {
+        var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id == id);
+        if (author is null) 
+            return NotFound(new { Message = $"Author with id {id} not found." });
+        
+        _context.Authors.Remove(author);
+        await _context.SaveChangesAsync();
+        
+        return NoContent();
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Author>> UpdateAuthor(int id, [FromBody] Author updatedAuthor)
+    {
+        var author = await _context.Authors.FirstOrDefaultAsync(a => a.Id == id);
+        if (author is null) 
+            return NotFound(new { Message = $"Author with id {id} not found." });
+        
+        author.FirstName = updatedAuthor.FirstName;
+        author.LastName = updatedAuthor.LastName;
+        author.About = updatedAuthor.About;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(author);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Author>> Author([FromBody] Author author)
     {

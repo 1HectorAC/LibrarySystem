@@ -32,6 +32,39 @@ public class BookCopyController : ControllerBase
         return Ok(bookCopy);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteBookCopy(int id)
+    {
+        var bookCopy = await _context.BookCopies.FirstOrDefaultAsync(i => i.Id == id);
+        if (bookCopy is null) 
+            return NotFound(new { Message = $"BookCopy with id {id} not found." });
+        
+        _context.BookCopies.Remove(bookCopy);
+        await _context.SaveChangesAsync();
+        
+        return NoContent();
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Author>> UpdateBookCopy(int id, [FromBody] BookCopy updatedBookCopy)
+    {
+        var bookCopy = await _context.BookCopies.FirstOrDefaultAsync(a => a.Id == id);
+        if (bookCopy is null) 
+            return NotFound(new { Message = $"BookCopy with id {id} not found." });
+
+        // Validate BookId exists
+        var bookCheck = await _context.Books.AnyAsync(i => i.Id == updatedBookCopy.BookId);
+        if (!bookCheck)
+            return BadRequest(new { Message = "BookId does not exits in db." });
+
+        bookCopy.BookId = updatedBookCopy.BookId;
+        bookCopy.Available = updatedBookCopy.Available;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(bookCopy);
+    }
+
     [HttpPost]
     public async Task<ActionResult<BookCopy>> BookCopy([FromBody] BookCopy bookCopy)
     {

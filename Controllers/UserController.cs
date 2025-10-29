@@ -33,6 +33,35 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(i => i.Id == id);
+        if (user is null) 
+            return NotFound(new { Message = $"User with id {id} not found." });
+        
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+        
+        return NoContent();
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Author>> UpdateUser(int id, [FromBody] User updatedUser)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(a => a.Id == id);
+        if (user is null)
+            return NotFound(new { Message = $"User with id {id} not found." });
+        
+        user.FirstName = updatedUser.FirstName;
+        user.LastName = updatedUser.LastName;
+        user.Email = updatedUser.Email;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(user);
+    }
+
     [HttpPost]
     public async Task<ActionResult<User>> MakeUser([FromBody] User user)
     {
