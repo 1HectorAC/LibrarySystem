@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
 
 Env.Load();
 builder.Services.AddDbContext<LibraryDbContext>(options => options.UseSqlServer(Environment.GetEnvironmentVariable("DB_CONNECTION")));

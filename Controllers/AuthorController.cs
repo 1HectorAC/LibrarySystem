@@ -4,6 +4,7 @@ using LibrarySystem.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
@@ -12,23 +13,38 @@ namespace LibrarySystem.Controllers;
 public class AuthorController: ControllerBase
 {
     private readonly LibraryDbContext _context;
-    public AuthorController(LibraryDbContext context)
+    private readonly IMemoryCache _cache;
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(30);
+    public AuthorController(LibraryDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<Author>>> Authors()
     {
-
-        return Ok(await _context.Authors.ToListAsync());
+        var cacheKey = "Authors";
+        if(!_cache.TryGetValue(cacheKey, out List<Author>? authors))
+        {
+            authors = await _context.Authors.ToListAsync();
+            _cache.Set(cacheKey, authors, _cacheExpiration);
+        }
+        return Ok(authors);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Author>> Author(int id)
     {
-        var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id.Equals(id));
-        if (author == null) return NotFound();
+        var cacheKey = $"Authors_{id}";
+        if(!_cache.TryGetValue(cacheKey, out Author? author))
+        {
+            author = await _context.Authors.FirstOrDefaultAsync(i => i.Id.Equals(id));
+            if (author is null)
+                return NotFound(new { Message = $"Author with id {id} not found." });
+            
+            _cache.Set(cacheKey, author, _cacheExpiration);
+        }
         return Ok(author);
     }
 
@@ -36,12 +52,13 @@ public class AuthorController: ControllerBase
     public async Task<IActionResult> DeleteAuthor(int id)
     {
         var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id == id);
-        if (author is null) 
+        if (author is null)
             return NotFound(new { Message = $"Author with id {id} not found." });
         
         _context.Authors.Remove(author);
         await _context.SaveChangesAsync();
-        
+        _cache.Remove($"Authors_{id}");
+        _cache.Remove("Authors");
         return NoContent();
     }
 
@@ -57,6 +74,8 @@ public class AuthorController: ControllerBase
         author.About = updatedAuthor.About;
 
         await _context.SaveChangesAsync();
+        _cache.Remove($"Authors_{id}");
+        _cache.Remove("Authors");
 
         return Ok(author);
     }
@@ -66,6 +85,7 @@ public class AuthorController: ControllerBase
     {
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
+        _cache.Remove("Authors");
         return CreatedAtAction(nameof(Author), new {id=author.Id }, author);
     }
 
