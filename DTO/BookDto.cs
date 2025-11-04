@@ -27,4 +27,8 @@ public class BookDto
     [Required]
     [StringLength(100)]
     public required string PublisherName { get; set; }
+
+    public int TotalCopies { get; set; }
+
+    public int AvailableCopies { get; set; }
 }

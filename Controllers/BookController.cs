@@ -4,6 +4,7 @@ using LibrarySystem.DTO;
 using LibrarySystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
@@ -12,16 +13,23 @@ namespace LibrarySystem.Controllers;
 public class BookController : ControllerBase
 {
     private readonly LibraryDbContext _context;
-    public BookController(LibraryDbContext context)
+    private readonly IMemoryCache _cache;
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(30);
+    public BookController(LibraryDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<BookDto>>> Books([FromQuery] string? genreName, [FromQuery] string? authorFirstName, [FromQuery] string? authorLastName)
     {
         //Consider adding pagination
-        var books = _context.Books.Include(i => i.BookGenres).ThenInclude(i => i.Genre).Include(i => i.Author).Include(i => i.Publisher).AsQueryable();
+        var books = _context.Books
+            .Include(i => i.BookGenres).ThenInclude(i => i.Genre)
+            .Include(i => i.Author)
+            .Include(i => i.Publisher)
+            .AsQueryable();
 
         if (genreName is not null)
             books = books.Where(i => i.BookGenres.Any(i => i.Genre != null && i.Genre.Name == genreName));
@@ -53,9 +61,90 @@ public class BookController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BookDto>> Book(int id)
     {
-        var book = await _context.Books.Include(i => i.BookGenres).ThenInclude(i => i.Genre).Include(i => i.Author).Include(i => i.Publisher).FirstOrDefaultAsync(i => i.Id.Equals(id));
-        if (book == null) return NotFound();
+        var cacheKey = $"Books_{id}";
+        if (!_cache.TryGetValue(cacheKey, out Book? book))
+        {
+            book = await _context.Books
+                .Include(i => i.BookGenres).ThenInclude(i => i.Genre)
+                .Include(i => i.Author).Include(i => i.Publisher)
+                .Include(id => id.BookCopies)
+                .FirstOrDefaultAsync(i => i.Id.Equals(id));
+            if (book == null)
+                return NotFound(new { Message = $"Book with id {id} not found." });
 
+            _cache.Set(cacheKey, book, _cacheExpiration);
+        }
+
+        // Second null book check to make BookDto validation is fuffiled.
+        if (book is null)
+            return NotFound(new { Message = $"Book with id {id} not found." });
+
+        var result = new BookDto
+        {
+            Id = book.Id,
+            Title = book.Title,
+            Description = book.Description,
+            Isbn = book.Isbn,
+            AuthorName = book.Author == null ? "" : book.Author.FirstName + " " + book.Author.LastName,
+            PublisherName = book.Publisher == null ? "" : book.Publisher.Name,
+            Genres = book.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
+            TotalCopies = book.BookCopies.Count,
+            AvailableCopies = book.BookCopies.Count(i => i.Available)
+        };
+
+        return Ok(result);
+
+
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult<BookDto>> UpdateBook(int id, [FromBody] CreateBookDto bookDto)
+    {
+        var book = await _context.Books
+            .Include(b => b.BookGenres)
+            .Include(b => b.Author)
+            .Include(b => b.Publisher)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (book == null)
+            return NotFound(new { Message = $"Book with Id {id} not found." });
+
+        // Validate Author exists
+        if (!await _context.Authors.AnyAsync(a => a.Id == bookDto.AuthorId))
+            return BadRequest(new { Message = "AuthorId does not match an Author in database." });
+
+        // Validate Publisher exists
+        if (!await _context.Publishers.AnyAsync(p => p.Id == bookDto.PublisherId))
+            return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
+
+        // Validate GenreIds exist
+        if (bookDto.GenreIds.Count > 0)
+        {
+            var genres = await _context.Genres.ToListAsync();
+            var genreCheck = bookDto.GenreIds.All(id => genres.Any(g => g.Id == id));
+            if (!genreCheck)
+                return BadRequest(new { Message = "One or more genreId(s) doesn't exist in database" });
+        }
+
+        // Update basic properties
+        book.Title = bookDto.Title;
+        book.Description = bookDto.Description;
+        book.AuthorId = bookDto.AuthorId;
+        book.PublisherId = bookDto.PublisherId;
+        book.Isbn = bookDto.Isbn;
+
+        // Update genres - remove existing and add new
+        _context.BookGenres.RemoveRange(book.BookGenres);
+        book.BookGenres = bookDto.GenreIds.Select(genreId => new BookGenre
+        {
+            BookId = id,
+            GenreId = genreId
+        }).ToList();
+
+        await _context.SaveChangesAsync();
+        _cache.Remove($"Books_{id}");
+
+        // Return updated book in same format as GET
         var result = new BookDto
         {
             Id = book.Id,
@@ -69,67 +158,6 @@ public class BookController : ControllerBase
 
         return Ok(result);
     }
-
-[HttpPut("{id}")]
-public async Task<ActionResult<BookDto>> UpdateBook(int id, [FromBody] CreateBookDto bookDto)
-{
-    var book = await _context.Books
-        .Include(b => b.BookGenres)
-        .Include(b => b.Author)
-        .Include(b => b.Publisher)
-        .FirstOrDefaultAsync(b => b.Id == id);
-
-    if (book == null)
-        return NotFound(new { Message = $"Book with ID {id} not found." });
-
-    // Validate Author exists
-    if (!await _context.Authors.AnyAsync(a => a.Id == bookDto.AuthorId))
-        return BadRequest(new { Message = "AuthorId does not match an Author in database." });
-
-    // Validate Publisher exists
-    if (!await _context.Publishers.AnyAsync(p => p.Id == bookDto.PublisherId))
-        return BadRequest(new { Message = "PublisherId does not match a Publisher in database." });
-
-    // Validate GenreIds exist
-    if (bookDto.GenreIds.Count > 0)
-    {
-        var genres = await _context.Genres.ToListAsync();
-        var genreCheck = bookDto.GenreIds.All(id => genres.Any(g => g.Id == id));
-        if (!genreCheck)
-            return BadRequest(new { Message = "One or more genreId(s) doesn't exist in database" });
-    }
-
-    // Update basic properties
-    book.Title = bookDto.Title;
-    book.Description = bookDto.Description;
-    book.AuthorId = bookDto.AuthorId;
-    book.PublisherId = bookDto.PublisherId;
-    book.Isbn = bookDto.Isbn;
-
-    // Update genres - remove existing and add new
-    _context.BookGenres.RemoveRange(book.BookGenres);
-    book.BookGenres = bookDto.GenreIds.Select(genreId => new BookGenre 
-    { 
-        BookId = id, 
-        GenreId = genreId 
-    }).ToList();
-
-    await _context.SaveChangesAsync();
-
-    // Return updated book in same format as GET
-    var result = new BookDto
-    {
-        Id = book.Id,
-        Title = book.Title,
-        Description = book.Description,
-        Isbn = book.Isbn,
-        AuthorName = book.Author == null ? "" : book.Author.FirstName + " " + book.Author.LastName,
-        PublisherName = book.Publisher == null ? "" : book.Publisher.Name,
-        Genres = book.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
-    };
-
-    return Ok(result);
-}
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBook(int id)
@@ -152,6 +180,7 @@ public async Task<ActionResult<BookDto>> UpdateBook(int id, [FromBody] CreateBoo
 
         _context.Books.Remove(book);
         await _context.SaveChangesAsync();
+        _cache.Remove($"Books_{id}");
 
         return NoContent();
     }
