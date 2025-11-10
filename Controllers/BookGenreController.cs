@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("bookGenre/[action]")]
+[Route("api/book-genres")]
 [ApiController]
 public class BookGenreController : ControllerBase
 {
@@ -17,18 +17,20 @@ public class BookGenreController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BookGenre>>> BookGenres()
+    public async Task<ActionResult<List<BookGenre>>> GetBookGenres()
     {
         var bookGenres = await _context.BookGenres.ToListAsync();
         return Ok(bookGenres);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<BookGenre>> BookGenre(int id)
+    public async Task<ActionResult<BookGenre>> GetBookGenre(int id)
     {
         var bookGenre = await _context.BookGenres.FindAsync(id);
+
         if (bookGenre is null)
             return NotFound(new { Message = $"BookGenre with id {id} not found." });
+
         return Ok(bookGenre);
     }
 
@@ -44,6 +46,7 @@ public class BookGenreController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<BookGenre>> UpdateBookGenre(int id, [FromBody] BookGenre updatedBookGenre)
     {
@@ -74,6 +77,7 @@ public class BookGenreController : ControllerBase
     {
         _context.Add(bookGenre);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(BookGenre), new {id = bookGenre.Id }, bookGenre);
+
+        return CreatedAtAction(nameof(BookGenre), new { id = bookGenre.Id }, bookGenre);
     }
 }

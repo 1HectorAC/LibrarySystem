@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
-[Route("book/[action]")]
+[Route("api/books")]
 [ApiController]
 public class BookController : ControllerBase
 {
@@ -22,7 +22,7 @@ public class BookController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BookDto>>> Books([FromQuery] string? genreName, [FromQuery] string? authorFirstName, [FromQuery] string? authorLastName)
+    public async Task<ActionResult<List<BookDto>>> GetBooks([FromQuery] string? genreName, [FromQuery] string? authorFirstName, [FromQuery] string? authorLastName)
     {
         //Consider adding pagination
         var books = _context.Books
@@ -42,7 +42,6 @@ public class BookController : ControllerBase
 
         // Use AsNoTracking for read only queries to reduce memory and CPU
         //Note: don't run multiple EF queries in parallel on same LibraryDbContext instance
-
         var result = await books.AsNoTracking().Select(b => new BookDto
         {
             Id = b.Id,
@@ -59,9 +58,10 @@ public class BookController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<BookDto>> Book(int id)
+    public async Task<ActionResult<BookDto>> GetBook(int id)
     {
         var cacheKey = $"Books_{id}";
+
         if (!_cache.TryGetValue(cacheKey, out Book? book))
         {
             book = await _context.Books
@@ -69,6 +69,7 @@ public class BookController : ControllerBase
                 .Include(i => i.Author).Include(i => i.Publisher)
                 .Include(id => id.BookCopies)
                 .FirstOrDefaultAsync(i => i.Id.Equals(id));
+
             if (book == null)
                 return NotFound(new { Message = $"Book with id {id} not found." });
 
@@ -186,12 +187,13 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<BookDto>> Book([FromBody] CreateBookDto book)
+    public async Task<ActionResult<BookDto>> AddBook([FromBody] CreateBookDto book)
     {
         // Check if Author exits
         bool authorCheck = _context.Authors.Any(a => a.Id.Equals(book.AuthorId));
         if (!authorCheck)
             return BadRequest(new { Message = "AuthorId does not match an Author in database." });
+
         //Check if Publisher exits
         bool publisherCheck = _context.Publishers.Any(p => p.Id.Equals(book.PublisherId));
         if (!publisherCheck)

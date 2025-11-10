@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("user/[action]")]
+[Route("api/users")]
 [ApiController]
 public class UserController : ControllerBase
 {
@@ -18,7 +18,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<User>>> Users()
+    public async Task<ActionResult<List<User>>> GetUsers()
     {
         var users = await _context.Users.ToListAsync();
         return Ok(users);
@@ -37,12 +37,12 @@ public class UserController : ControllerBase
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _context.Users.FirstOrDefaultAsync(i => i.Id == id);
-        if (user is null) 
+        if (user is null)
             return NotFound(new { Message = $"User with id {id} not found." });
-        
+
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
-        
+
         return NoContent();
     }
 
@@ -52,7 +52,7 @@ public class UserController : ControllerBase
         var user = await _context.Users.FirstOrDefaultAsync(a => a.Id == id);
         if (user is null)
             return NotFound(new { Message = $"User with id {id} not found." });
-        
+
         user.FirstName = updatedUser.FirstName;
         user.LastName = updatedUser.LastName;
         user.Email = updatedUser.Email;
@@ -63,11 +63,11 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> MakeUser([FromBody] User user)
+    public async Task<ActionResult<User>> AddUser([FromBody] User user)
     {
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetUser), new {id = user.Id }, user);
+        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
     }
 }

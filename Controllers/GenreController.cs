@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("genre/[action]")]
+[Route("api/genres")]
 [ApiController]
 public class GenreController : ControllerBase
 {
@@ -18,14 +18,14 @@ public class GenreController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Genre>>> Genres()
+    public async Task<ActionResult<List<Genre>>> GetGenres()
     {
         var genres = await _context.Genres.ToListAsync();
         return Ok(genres);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Genre>> Genre(int id)
+    public async Task<ActionResult<Genre>> GetGenre(int id)
     {
         var genre = await _context.Genres.FindAsync(id);
         if (genre is null)
@@ -65,6 +65,7 @@ public class GenreController : ControllerBase
     {
         _context.Genres.Add(genre);
         await _context.SaveChangesAsync();
+
         return CreatedAtAction(nameof(Genre), new { id = genre.Id }, genre);
     }
 

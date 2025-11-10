@@ -8,9 +8,9 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
-[Route("author/[action]")]
+[Route("api/authors")]
 [ApiController]
-public class AuthorController: ControllerBase
+public class AuthorController : ControllerBase
 {
     private readonly LibraryDbContext _context;
     private readonly IMemoryCache _cache;
@@ -22,10 +22,10 @@ public class AuthorController: ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Author>>> Authors()
+    public async Task<ActionResult<List<Author>>> GetAuthors()
     {
         var cacheKey = "Authors";
-        if(!_cache.TryGetValue(cacheKey, out List<Author>? authors))
+        if (!_cache.TryGetValue(cacheKey, out List<Author>? authors))
         {
             authors = await _context.Authors.ToListAsync();
             _cache.Set(cacheKey, authors, _cacheExpiration);
@@ -34,15 +34,15 @@ public class AuthorController: ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Author>> Author(int id)
+    public async Task<ActionResult<Author>> GetAuthor(int id)
     {
         var cacheKey = $"Authors_{id}";
-        if(!_cache.TryGetValue(cacheKey, out Author? author))
+        if (!_cache.TryGetValue(cacheKey, out Author? author))
         {
             author = await _context.Authors.FirstOrDefaultAsync(i => i.Id.Equals(id));
             if (author is null)
                 return NotFound(new { Message = $"Author with id {id} not found." });
-            
+
             _cache.Set(cacheKey, author, _cacheExpiration);
         }
         return Ok(author);
@@ -54,11 +54,13 @@ public class AuthorController: ControllerBase
         var author = await _context.Authors.FirstOrDefaultAsync(i => i.Id == id);
         if (author is null)
             return NotFound(new { Message = $"Author with id {id} not found." });
-        
+
         _context.Authors.Remove(author);
         await _context.SaveChangesAsync();
+
         _cache.Remove($"Authors_{id}");
         _cache.Remove("Authors");
+
         return NoContent();
     }
 
@@ -66,9 +68,9 @@ public class AuthorController: ControllerBase
     public async Task<ActionResult<Author>> UpdateAuthor(int id, [FromBody] Author updatedAuthor)
     {
         var author = await _context.Authors.FirstOrDefaultAsync(a => a.Id == id);
-        if (author is null) 
+        if (author is null)
             return NotFound(new { Message = $"Author with id {id} not found." });
-        
+
         author.FirstName = updatedAuthor.FirstName;
         author.LastName = updatedAuthor.LastName;
         author.About = updatedAuthor.About;
@@ -81,12 +83,14 @@ public class AuthorController: ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Author>> Author([FromBody] Author author)
+    public async Task<ActionResult<Author>> AddAuthor([FromBody] Author author)
     {
         _context.Authors.Add(author);
         await _context.SaveChangesAsync();
+
         _cache.Remove("Authors");
-        return CreatedAtAction(nameof(Author), new {id=author.Id }, author);
+
+        return CreatedAtAction(nameof(Author), new { id = author.Id }, author);
     }
 
 }

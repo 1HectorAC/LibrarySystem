@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("checkout/[action]")]
+[Route("api/checkouts")]
 [ApiController]
 public class CheckoutController : ControllerBase
 {
@@ -19,14 +19,14 @@ public class CheckoutController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Checkout>>> Checkouts()
+    public async Task<ActionResult<List<Checkout>>> GetCheckouts()
     {
         var checkouts = await _context.Checkouts.ToListAsync();
         return Ok(checkouts);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Checkout>> Checkout(int id)
+    public async Task<ActionResult<Checkout>> GetCheckout(int id)
     {
         var checkout = await _context.Checkouts.FirstOrDefaultAsync(i => i.Equals(id));
         if (checkout is null) return NotFound();
@@ -75,7 +75,7 @@ public class CheckoutController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Checkout>> Checkout([FromBody] CheckoutDto checkout)
+    public async Task<ActionResult<Checkout>> AddCheckout([FromBody] CheckoutDto checkout)
     {
         var bookCopy = _context.BookCopies.FirstOrDefault(i => i.Id == checkout.BookCopyId);
         var UserCheck = _context.Users.Any(i => i.Id == checkout.UserId);
@@ -86,41 +86,41 @@ public class CheckoutController : ControllerBase
         if (!UserCheck)
             return BadRequest(new { Message = "UserId does not exits in db." });
         if (!bookCopy.Available)
-            return BadRequest(new { Message ="BookCopy is not available. Currently checked out already." });
+            return BadRequest(new { Message = "BookCopy is not available. Currently checked out already." });
 
-        var result = new Checkout {
+        var result = new Checkout
+        {
             BookCopyId = checkout.BookCopyId,
             UserId = checkout.UserId,
             CheckoutDate = DateTime.UtcNow,
             DueDate = DateTime.UtcNow.AddDays(30)
         };
 
-            _context.Checkouts.Add(result);
+        _context.Checkouts.Add(result);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(Checkout), new { id = result.Id }, result);
     }
 
-    [HttpPut("{bookCopyId}")]
-    public async Task<IActionResult> CheckIn(int bookCopyId)
+    [HttpPut("{bookCopyId}/return-book")]
+    public async Task<IActionResult> ReturnBook(int bookCopyId)
     {
         // There should only be one checkout with a BookCopy and no DateReturned,
         //  but consider adding Error warning if more exits.
         var checkout = await _context.Checkouts
             .Include(i => i.BookCopy)
             .FirstOrDefaultAsync(i => i.BookCopyId == bookCopyId && i.DateReturned == null);
-        
+
         // Validation
         if (checkout is null)
             return NotFound(new { Message = $"No bookCopy with id {bookCopyId} is currently checkedout" });
         if (checkout.BookCopy is null)
             return BadRequest(new { Message = "Error getting the BookCopy" });
         if (checkout.BookCopy.Available)
-            return BadRequest(new {Message = $"BookCopy with id {bookCopyId}, is already available, Can't checkin. Need to edit checkout if this is a system error"});
-        
+            return BadRequest(new { Message = $"BookCopy with id {bookCopyId}, is already available, Can't checkin. Need to edit checkout if this is a system error" });
+
         checkout.DateReturned = DateTime.UtcNow;
         checkout.BookCopy.Available = true;
         await _context.SaveChangesAsync();
-        return Ok(new {Message= $"BookCopy with id {bookCopyId} successfully checked-in" });
-
+        return Ok(new { Message = $"BookCopy with id {bookCopyId} successfully checked-in" });
     }
 }

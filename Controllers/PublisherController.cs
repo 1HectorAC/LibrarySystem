@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("publisher/[action]")]
+[Route("api/publishers")]
 [ApiController]
 public class PublisherController : ControllerBase
 {
@@ -18,14 +18,14 @@ public class PublisherController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Publisher>>> Publishers()
+    public async Task<ActionResult<List<Publisher>>> GetPublishers()
     {
         var publishers = await _context.Publishers.ToListAsync();
         return Ok(publishers);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Publisher>> Publisher(int id)
+    public async Task<ActionResult<Publisher>> GetPublisher(int id)
     {
         var publisher = await _context.Publishers.FirstOrDefaultAsync(i => i.Id == id);
         if (publisher is null)
@@ -34,16 +34,15 @@ public class PublisherController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Publisher>> Publisher([FromBody] Publisher publisher)
+    public async Task<ActionResult<Publisher>> AddPublisher([FromBody] Publisher publisher)
     {
         _context.Add(publisher);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(Publisher), new { id = publisher.Id }, publisher);
     }
 
-
     [HttpPut("{id}")]
-    public async Task<ActionResult<Publisher>> UpdatePublisher(int id, Publisher updatedPublisher)
+    public async Task<ActionResult<Publisher>> UpdatePublisher(int id, [FromBody] Publisher updatedPublisher)
     {
         var publisher = await _context.Publishers.FirstOrDefaultAsync(i => i.Id == id);
         if (publisher is null)
@@ -64,10 +63,11 @@ public class PublisherController : ControllerBase
         var publisher = await _context.Publishers.FirstOrDefaultAsync(i => i.Id == id);
         if (publisher is null)
             return NotFound(new { Message = $"Publisher with id {id} not found." });
+
         _context.Publishers.Remove(publisher);
         await _context.SaveChangesAsync();
-        return NoContent();
 
+        return NoContent();
     }
 
 }

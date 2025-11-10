@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Route("bookCopy/[action]")]
+[Route("api/book-copies")]
 [ApiController]
 public class BookCopyController : ControllerBase
 {
@@ -18,14 +18,14 @@ public class BookCopyController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<BookCopy>>> BookCopies()
+    public async Task<ActionResult<List<BookCopy>>> GetBookCopies()
     {
         var bookCopies = await _context.BookCopies.ToListAsync();
         return Ok(bookCopies);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<BookCopy>> BookCopy(int id)
+    public async Task<ActionResult<BookCopy>> GetBookCopy(int id)
     {
         var bookCopy = await _context.BookCopies.FirstOrDefaultAsync(i => i.Id.Equals(id));
         if (bookCopy is null) return NotFound();
@@ -66,7 +66,7 @@ public class BookCopyController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<BookCopy>> BookCopy([FromBody] BookCopy bookCopy)
+    public async Task<ActionResult<BookCopy>> AddBookCopy([FromBody] BookCopy bookCopy)
     {
         _context.BookCopies.Add(bookCopy);
         await _context.SaveChangesAsync();
