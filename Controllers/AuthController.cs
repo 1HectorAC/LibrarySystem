@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace LibrarySystem.Controllers;
 
 
-[Route("api/auth/[action]")]
+[Route("api/auth")]
 [ApiController]
 public class AuthController : ControllerBase
 {
@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
         }
         
         // Setup Key and Credentials
-        var Secret_key = _configuration["SECRET_KEY"] ?? throw new InvalidOperationException("Secret key not found in configuration.");
+        var Secret_key = _configuration["SECRET_KEY"] ?? throw new InvalidOperationException("Secret key not found in configuration. Controller: AuthController, Method: Login");
         var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Secret_key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
