@@ -25,10 +25,16 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginDto loginDto)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Email == loginDto.Email && u.Password == loginDto.Password);
+        var user = _context.Users.FirstOrDefault(u => u.Email == loginDto.Email);
+        
+        // Validate user
         if (user is null)
         {
-            return Unauthorized("Invalid email or password.");
+            return Unauthorized("Invalid email.");
+        }
+        if(BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password) == false)
+        {
+            return Unauthorized("Invalid password.");
         }
 
         // Create Claims

@@ -65,6 +65,7 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> AddUser([FromBody] User user)
     {
+        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
