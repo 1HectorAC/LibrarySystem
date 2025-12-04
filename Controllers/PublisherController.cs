@@ -20,14 +20,14 @@ public class PublisherController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Publisher>>> GetPublishers()
     {
-        var publishers = await _context.Publishers.ToListAsync();
+        var publishers = await _context.Publishers.AsNoTracking().ToListAsync();
         return Ok(publishers);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Publisher>> GetPublisher(int id)
     {
-        var publisher = await _context.Publishers.FirstOrDefaultAsync(i => i.Id == id);
+        var publisher = await _context.Publishers.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
         if (publisher is null)
             return NotFound(new { Message = $"Publisher with Id {id} not found." });
         return Ok(publisher);

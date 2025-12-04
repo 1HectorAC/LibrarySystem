@@ -20,15 +20,17 @@ public class BookCopyController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<BookCopy>>> GetBookCopies()
     {
-        var bookCopies = await _context.BookCopies.ToListAsync();
+        var bookCopies = await _context.BookCopies.AsNoTracking().ToListAsync();
         return Ok(bookCopies);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<BookCopy>> GetBookCopy(int id)
     {
-        var bookCopy = await _context.BookCopies.FirstOrDefaultAsync(i => i.Id.Equals(id));
-        if (bookCopy is null) return NotFound();
+        var bookCopy = await _context.BookCopies.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
+        if (bookCopy is null) 
+            return NotFound();
+
         return Ok(bookCopy);
     }
 

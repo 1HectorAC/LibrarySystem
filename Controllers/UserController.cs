@@ -20,14 +20,14 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<User>>> GetUsers()
     {
-        var users = await _context.Users.ToListAsync();
+        var users = await _context.Users.AsNoTracking().ToListAsync();
         return Ok(users);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(i => i.Id.Equals(id));
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
         if (user is null) return NotFound();
 
         return Ok(user);

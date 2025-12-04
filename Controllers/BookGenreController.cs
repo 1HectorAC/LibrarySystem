@@ -19,14 +19,14 @@ public class BookGenreController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<BookGenre>>> GetBookGenres()
     {
-        var bookGenres = await _context.BookGenres.ToListAsync();
+        var bookGenres = await _context.BookGenres.AsNoTracking().ToListAsync();
         return Ok(bookGenres);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<BookGenre>> GetBookGenre(int id)
     {
-        var bookGenre = await _context.BookGenres.FindAsync(id);
+        var bookGenre = await _context.BookGenres.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
 
         if (bookGenre is null)
             return NotFound(new { Message = $"BookGenre with id {id} not found." });

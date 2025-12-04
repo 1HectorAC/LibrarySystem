@@ -27,7 +27,7 @@ public class AuthorController : ControllerBase
         var cacheKey = "Authors";
         if (!_cache.TryGetValue(cacheKey, out List<Author>? authors))
         {
-            authors = await _context.Authors.ToListAsync();
+            authors = await _context.Authors.AsNoTracking().ToListAsync();
             _cache.Set(cacheKey, authors, _cacheExpiration);
         }
         return Ok(authors);
@@ -39,7 +39,7 @@ public class AuthorController : ControllerBase
         var cacheKey = $"Authors_{id}";
         if (!_cache.TryGetValue(cacheKey, out Author? author))
         {
-            author = await _context.Authors.FirstOrDefaultAsync(i => i.Id.Equals(id));
+            author = await _context.Authors.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
             if (author is null)
                 return NotFound(new { Message = $"Author with id {id} not found." });
 

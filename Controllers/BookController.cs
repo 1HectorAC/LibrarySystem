@@ -64,10 +64,12 @@ public class BookController : ControllerBase
 
         if (!_cache.TryGetValue(cacheKey, out Book? book))
         {
+            // Include related data for BookDto
             book = await _context.Books
                 .Include(i => i.BookGenres).ThenInclude(i => i.Genre)
                 .Include(i => i.Author).Include(i => i.Publisher)
                 .Include(id => id.BookCopies)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Id.Equals(id));
 
             if (book == null)
@@ -94,8 +96,6 @@ public class BookController : ControllerBase
         };
 
         return Ok(result);
-
-
     }
 
     [HttpPut("{id}")]

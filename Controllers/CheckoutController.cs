@@ -21,15 +21,17 @@ public class CheckoutController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<Checkout>>> GetCheckouts()
     {
-        var checkouts = await _context.Checkouts.ToListAsync();
+        var checkouts = await _context.Checkouts.AsNoTracking().ToListAsync();
         return Ok(checkouts);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Checkout>> GetCheckout(int id)
     {
-        var checkout = await _context.Checkouts.FirstOrDefaultAsync(i => i.Equals(id));
-        if (checkout is null) return NotFound();
+        var checkout = await _context.Checkouts.AsNoTracking().FirstOrDefaultAsync(i => i.Id == id);
+        if (checkout is null) 
+            return NotFound();
+            
         return Ok(checkout);
     }
 

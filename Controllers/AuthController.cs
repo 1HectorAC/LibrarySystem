@@ -4,6 +4,7 @@ using System.Security.Claims;
 using LibrarySystem.Data;
 using LibrarySystem.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace LibrarySystem.Controllers;
@@ -25,7 +26,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginDto loginDto)
     {
-        var user = _context.Users.FirstOrDefault(u => u.Email == loginDto.Email);
+        var user = _context.Users.AsNoTracking().FirstOrDefault(u => u.Email == loginDto.Email);
         
         // Validate user
         if (user is null)
