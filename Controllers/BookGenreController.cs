@@ -78,6 +78,6 @@ public class BookGenreController : ControllerBase
         _context.Add(bookGenre);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(BookGenre), new { id = bookGenre.Id }, bookGenre);
+        return CreatedAtAction(nameof(GetBookGenre), new { id = bookGenre.Id }, bookGenre);
     }
 }

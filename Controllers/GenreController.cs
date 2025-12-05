@@ -65,7 +65,7 @@ public class GenreController : ControllerBase
         _context.Genres.Add(genre);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(Genre), new { id = genre.Id }, genre);
+        return CreatedAtAction(nameof(GetGenre), new { id = genre.Id }, genre);
     }
 
 }

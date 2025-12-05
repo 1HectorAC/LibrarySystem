@@ -72,6 +72,6 @@ public class BookCopyController : ControllerBase
     {
         _context.BookCopies.Add(bookCopy);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(BookCopy), new {id = bookCopy.Id }, bookCopy);
+        return CreatedAtAction(nameof(GetBookCopy), new {id = bookCopy.Id }, bookCopy);
     }
 }

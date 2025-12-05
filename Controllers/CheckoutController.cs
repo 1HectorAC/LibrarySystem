@@ -100,7 +100,7 @@ public class CheckoutController : ControllerBase
 
         _context.Checkouts.Add(result);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Checkout), new { id = result.Id }, result);
+        return CreatedAtAction(nameof(GetCheckout), new { id = result.Id }, result);
     }
 
     [HttpPut("{bookCopyId}/return-book")]

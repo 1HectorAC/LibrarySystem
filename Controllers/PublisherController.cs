@@ -38,7 +38,7 @@ public class PublisherController : ControllerBase
     {
         _context.Add(publisher);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Publisher), new { id = publisher.Id }, publisher);
+        return CreatedAtAction(nameof(GetPublisher), new { id = publisher.Id }, publisher);
     }
 
     [HttpPut("{id}")]

@@ -29,6 +29,7 @@ public class BookController : ControllerBase
             .Include(i => i.BookGenres).ThenInclude(i => i.Genre)
             .Include(i => i.Author)
             .Include(i => i.Publisher)
+            .Include(id => id.BookCopies)
             .AsQueryable();
 
         if (genreName is not null)
@@ -51,6 +52,8 @@ public class BookController : ControllerBase
             AuthorName = b.Author == null ? "" : b.Author.FirstName + " " + b.Author.LastName,
             PublisherName = b.Publisher == null ? "" : b.Publisher.Name,
             Genres = b.BookGenres.Where(bg => bg.Genre != null).Select(bg => bg.Genre!.Name).ToList(),
+            TotalCopies = b.BookCopies.Count,
+            AvailableCopies = b.BookCopies.Count(i => i.Available)
 
         }).ToListAsync();
 
@@ -224,6 +227,6 @@ public class BookController : ControllerBase
 
         // Consider adding format to result, Maybe use DTO.
 
-        return CreatedAtAction(nameof(Book), new { id = result.Id }, result);
+        return CreatedAtAction(nameof(GetBook), new { id = result.Id }, result);
     }
 }

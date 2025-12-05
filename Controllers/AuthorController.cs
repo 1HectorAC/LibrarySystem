@@ -90,7 +90,7 @@ public class AuthorController : ControllerBase
 
         _cache.Remove("Authors");
 
-        return CreatedAtAction(nameof(Author), new { id = author.Id }, author);
+        return CreatedAtAction(nameof(GetAuthor), new { id = author.Id }, author);
     }
 
 }
