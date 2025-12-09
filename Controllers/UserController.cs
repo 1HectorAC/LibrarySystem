@@ -1,5 +1,6 @@
 
 using LibrarySystem.Data;
+using LibrarySystem.DTO;
 using LibrarySystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -63,12 +64,39 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<User>> AddUser([FromBody] User user)
+    public async Task<ActionResult<User>> AddUser([FromBody] CreateUserDto user)
     {
-        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-        _context.Users.Add(user);
+        var newUser = new User
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Password = BCrypt.Net.BCrypt.HashPassword(user.Password),
+            Roles = user.Roles
+        };
+        _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+        return CreatedAtAction(nameof(GetUser), new { id = newUser.Id }, newUser);
     }
+
+    // Limited to adding users with "basic" role only, preventing privilege escalation
+    [HttpPost("basic")]
+    public async Task<ActionResult<User>> AddBasicUser([FromBody] CreateUserDto user)
+    {
+        var newUser = new User
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Password = BCrypt.Net.BCrypt.HashPassword(user.Password),
+            Roles = "basic"
+        };
+        
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetUser), new { id = newUser.Id }, newUser);
+    }
+
 }
