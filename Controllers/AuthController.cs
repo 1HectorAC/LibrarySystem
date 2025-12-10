@@ -23,6 +23,7 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    /// Login endpoint for users with admin or employee roles.
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginDto loginDto)
     {
@@ -32,6 +33,10 @@ public class AuthController : ControllerBase
         if (user is null)
         {
             return Unauthorized("Invalid email.");
+        }
+        if(!user.Roles.Contains("admin") || !user.Roles.Contains("employee"))
+        {
+            return Unauthorized("Invalid user role.");
         }
         if(BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password) == false)
         {
