@@ -1,13 +1,15 @@
 
 using LibrarySystem.Data;
 using LibrarySystem.Models;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
+// Only allow admin and employee roles to access these endpoints, except for GetAuhors and GetAuthor
+[Authorize(Roles = "admin,employee")]
 [Route("api/authors")]
 [ApiController]
 public class AuthorController : ControllerBase
@@ -21,6 +23,7 @@ public class AuthorController : ControllerBase
         _cache = cache;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<List<Author>>> GetAuthors()
     {
@@ -33,6 +36,7 @@ public class AuthorController : ControllerBase
         return Ok(authors);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<ActionResult<Author>> GetAuthor(int id)
     {

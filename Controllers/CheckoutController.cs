@@ -2,11 +2,14 @@
 using LibrarySystem.Data;
 using LibrarySystem.DTO;
 using LibrarySystem.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
+// Only allow admin and employee roles to access these endpoints
+[Authorize(Roles = "Admin, Employee")]
 [Route("api/checkouts")]
 [ApiController]
 public class CheckoutController : ControllerBase

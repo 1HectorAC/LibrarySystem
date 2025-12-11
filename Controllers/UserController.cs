@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-[Authorize]
+// Only allow admin and employee roles to access these endpoints
+[Authorize(Roles = "admin,employee")]
 [Route("api/users")]
 [ApiController]
 public class UserController : ControllerBase

@@ -34,7 +34,7 @@ public class AuthController : ControllerBase
         {
             return Unauthorized("Invalid email.");
         }
-        if(!user.Roles.Contains("admin") || !user.Roles.Contains("employee"))
+        if(!user.Roles.Contains("admin") && !user.Roles.Contains("employee"))
         {
             return Unauthorized("Invalid user role.");
         }

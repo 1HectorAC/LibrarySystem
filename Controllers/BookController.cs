@@ -2,12 +2,16 @@
 using LibrarySystem.Data;
 using LibrarySystem.DTO;
 using LibrarySystem.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace LibrarySystem.Controllers;
 
+
+// Only allow admin and employee roles to access these endpoints, except for GetBooks and GetBook
+[Authorize(Roles = "admin,employee")]
 [Route("api/books")]
 [ApiController]
 public class BookController : ControllerBase
@@ -21,6 +25,7 @@ public class BookController : ControllerBase
         _cache = cache;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<List<BookDto>>> GetBooks([FromQuery] string? genreName, [FromQuery] string? authorFirstName, [FromQuery] string? authorLastName)
     {
@@ -60,6 +65,7 @@ public class BookController : ControllerBase
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<ActionResult<BookDto>> GetBook(int id)
     {

@@ -1,11 +1,14 @@
 
 using LibrarySystem.Data;
 using LibrarySystem.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
+// Only allow admin and employee roles to access these endpoints
+[Authorize(Roles = "admin,employee")]
 [Route("api/book-genres")]
 [ApiController]
 public class BookGenreController : ControllerBase
