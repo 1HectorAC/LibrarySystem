@@ -1,4 +1,5 @@
 
+using System.Security.Claims;
 using LibrarySystem.Data;
 using LibrarySystem.DTO;
 using LibrarySystem.Models;
@@ -8,8 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LibrarySystem.Controllers;
 
-// Only allow admin and employee roles to access these endpoints
-[Authorize(Roles = "Admin, Employee")]
 [Route("api/checkouts")]
 [ApiController]
 public class CheckoutController : ControllerBase
@@ -21,6 +20,7 @@ public class CheckoutController : ControllerBase
         _context = context;
     }
 
+    [Authorize(Roles = "admin, employee")]
     [HttpGet]
     public async Task<ActionResult<List<Checkout>>> GetCheckouts()
     {
@@ -28,6 +28,7 @@ public class CheckoutController : ControllerBase
         return Ok(checkouts);
     }
 
+    [Authorize(Roles = "admin, employee")]
     [HttpGet("{id}")]
     public async Task<ActionResult<Checkout>> GetCheckout(int id)
     {
@@ -38,6 +39,29 @@ public class CheckoutController : ControllerBase
         return Ok(checkout);
     }
 
+    // Get checkouts for the logged-in user. No role restriction
+    [Authorize]
+    [HttpGet("user")]
+    public async Task<ActionResult<List<Checkout>>> GetUserCheckouts([FromQuery] bool onlyActive = false)
+    {
+        // Get userId from the JWT token
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+
+        if (userIdClaim is null)
+            return Unauthorized(new { Message = "UserId claim not found in token." });
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            return Unauthorized(new { Message = "Invalid UserId claim." });
+
+        var checkouts = await _context.Checkouts
+            .AsNoTracking()
+            .Where(c => c.UserId == userId && (!onlyActive || c.DateReturned == null))
+            .ToListAsync();
+
+        return Ok(checkouts);
+    }
+
+    [Authorize(Roles = "admin, employee")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCheckout(int id)
     {
@@ -51,6 +75,7 @@ public class CheckoutController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "admin, Employee")]
     [HttpPut("{id}")]
     public async Task<ActionResult<Author>> UpdateCheckout(int id, [FromBody] Checkout updatedCheckout)
     {
@@ -79,9 +104,13 @@ public class CheckoutController : ControllerBase
         return Ok(checkout);
     }
 
+    [Authorize(Roles = "admin, employee")]
     [HttpPost]
     public async Task<ActionResult<Checkout>> AddCheckout([FromBody] CheckoutDto checkout)
     {
+        // Fix error where BookCopyId and UserId are not being set properly
+        Console.WriteLine("BookCopyId: " + checkout.BookCopyId);
+        Console.WriteLine("UserId: " + checkout.UserId);
         var bookCopy = _context.BookCopies.FirstOrDefault(i => i.Id == checkout.BookCopyId);
         var UserCheck = _context.Users.Any(i => i.Id == checkout.UserId);
 
@@ -106,6 +135,7 @@ public class CheckoutController : ControllerBase
         return CreatedAtAction(nameof(GetCheckout), new { id = result.Id }, result);
     }
 
+    [Authorize(Roles = "admin, employee")]
     [HttpPut("{bookCopyId}/return-book")]
     public async Task<IActionResult> ReturnBook(int bookCopyId)
     {
