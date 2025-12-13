@@ -6,9 +6,9 @@ namespace LibrarySystem.DTO;
 public class CheckoutDto
 {
     [Required]
-    public int UserId;
+    public int UserId { get; set; }
 
     [Required]
-    public int BookCopyId;
+    public int BookCopyId { get; set; }
 
 }

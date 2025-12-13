@@ -75,9 +75,9 @@ public class CheckoutController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "admin, Employee")]
+    [Authorize(Roles = "admin, employee")]
     [HttpPut("{id}")]
-    public async Task<ActionResult<Author>> UpdateCheckout(int id, [FromBody] Checkout updatedCheckout)
+    public async Task<ActionResult<Checkout>> UpdateCheckout(int id, [FromBody] Checkout updatedCheckout)
     {
         var checkout = await _context.Checkouts.FirstOrDefaultAsync(a => a.Id == id);
         if (checkout is null)
@@ -108,9 +108,6 @@ public class CheckoutController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Checkout>> AddCheckout([FromBody] CheckoutDto checkout)
     {
-        // Fix error where BookCopyId and UserId are not being set properly
-        Console.WriteLine("BookCopyId: " + checkout.BookCopyId);
-        Console.WriteLine("UserId: " + checkout.UserId);
         var bookCopy = _context.BookCopies.FirstOrDefault(i => i.Id == checkout.BookCopyId);
         var UserCheck = _context.Users.Any(i => i.Id == checkout.UserId);
 
@@ -129,6 +126,9 @@ public class CheckoutController : ControllerBase
             CheckoutDate = DateTime.UtcNow,
             DueDate = DateTime.UtcNow.AddDays(30)
         };
+
+        // Mark BookCopy as not available given that is is being checked out
+        bookCopy.Available = false;
 
         _context.Checkouts.Add(result);
         await _context.SaveChangesAsync();
