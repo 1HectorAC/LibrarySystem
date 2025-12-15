@@ -1,2 +1,5 @@
 // Make a .env file with the follow:
-DB_CONNECTION="Enter Db Conneciton String Here"
+DB_CONNECTION="Enter value here"
+SECRET_KEY="Enter value here"
+ADMIN_EMAIL="Enter value here"
+ADMIN_PASSWORD="Enter value here"
